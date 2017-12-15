@@ -1,0 +1,9 @@
+<openerp>
+    <data>
+
+        <record id="group_iquality_sincronized" model="res.groups">
+            <field name="name">iQuality / Users</field>
+        </record>
+
+    </data>
+</openerp>

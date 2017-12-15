@@ -1,0 +1,5 @@
+# iQuality adapter
+
+## Installation
+
+## Usage
