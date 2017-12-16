@@ -82,6 +82,26 @@ class IQualityScheduler(models.Model):
             _logger.info("employee %s syncronized" % o.name) if r.status_code == 200 else _logger.warning(
                 "Errors during employee %s sync" % o.name)
 
+    @staticmethod
+    def _timetracking_sync(env, host):
+        aal = env['account.analytic.line']
+
+        r = requests.get(host.get('url') + '/api/job/sync_timetracks', headers=host.get('headers'))
+        response = r.json()
+        for tt in response.get('payload'):
+            _logger.info(tt)
+            data = dict()
+            project_id = env['project.project'].search([('id', '=', tt.get('project').get('codename').split('_')[0])])
+            employee = env['hr.employee'].search([('user_id.email', '=', tt.get('owner_email'))])
+            data['account_id'] = project_id.analytic_account_id.id
+            data['user_id'] = employee.user_id.id
+            data['is_timesheet'] = True
+            data['name'] = '/' #tt.get('jobtype', '/')
+            data['date'] = tt.get('date_spent')
+            data['unit_amount'] = float(tt.get('time_spent'))
+
+            aal.create(data)
+
     def process_scheduler(self, cr, uid, context=None):
         iquality_settings_key = "iquality_settings"
         env = api.Environment(cr, uid, "")
@@ -106,4 +126,7 @@ class IQualityScheduler(models.Model):
         self._employee_sync(env, host)
 
         # Project Sync
-        # self._projects_sync(env, host)
+        self._projects_sync(env, host)
+
+        # TimeTracking Sync
+        self._timetracking_sync(env, host)
